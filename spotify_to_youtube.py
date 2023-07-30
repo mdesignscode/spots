@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 """Factor an object to Retrieve and Download a Youtube Video as MP3"""
 
-
 from __future__ import unicode_literals
 from csv import writer, reader
 from moviepy.editor import *
@@ -10,7 +9,7 @@ from mutagen.mp3 import MP3
 from os import path, remove
 from pytube import YouTube
 from requests import get
-from tenacity import retry
+from tenacity import retry, stop_after_delay
 import logging
 
 
@@ -28,7 +27,7 @@ class ProcessSpotifyLink:
         self.youtube_url = youtube_url if youtube_url else self.get_youtube_video()
         self.youtube = YouTube(self.youtube_url)
 
-    @retry
+    # @retry(stop=stop_after_delay(10))
     def download_youtube_video(self, directory_path=''):
         """Converts a youtube video to mp3
 
@@ -36,7 +35,6 @@ class ProcessSpotifyLink:
             directory_path (str, optional): The directory to save a playlist to. Defaults to ''.
         """
         yt = self.youtube
-        # TODO: check for metadata first
         # add title to downloads history
         track_title = f'{self.spotify_track["artist"]} - {self.spotify_track["title"]}'
         should_download = self.add_to_download_history(track_title)
@@ -49,7 +47,10 @@ class ProcessSpotifyLink:
             audio = yt.streams.get_audio_only()
             ext = audio.mime_type.split('/')[1]
             filename = f'{track_title}.{ext}'
-            output = f'{directory_path}/filename' if directory_path else filename
+            output = f'{directory_path}/{filename}' if directory_path else filename
+
+            logging.basicConfig(level=logging.INFO)
+            logging.info(f'Downloading {track_title}...')
             audio.download(output_path=directory_path, filename=filename)
 
             # convert to mp3 if mp4
@@ -99,7 +100,7 @@ class ProcessSpotifyLink:
         cover = metadata.get('cover', '')
         if cover:
             audio.tags.add(APIC(encoding=3, mime='image/jpeg', type=3,
-                            desc=u'Cover', data=get(metadata['cover']).content))
+                                desc=u'Cover', data=get(metadata['cover']).content))
 
         # Add lyrics if provided
         lyrics = metadata.get('lyrics', '')
@@ -121,7 +122,7 @@ class ProcessSpotifyLink:
         # Save the changes
         audio.save(audio_path)
         # except Exception as e:
-            # print(e)
+        # print(e)
 
     @staticmethod
     def add_to_download_history(title=None, add_title=False):
@@ -162,15 +163,18 @@ class ProcessSpotifyLink:
 
         return True
 
-    def get_youtube_video(self):
+    def get_youtube_video(self, search_title=''):
         """Searches for a given title on youtube
 
+        Args:
+            search_title (str, optional): the path of the audio file to be updated. Defaults to ''.
+
         Returns:
-            tuple: the watch url and uploader id
+            str: the watch url
         """
         from youtubesearchpython import VideosSearch
 
-        title = f"{self.spotify_track['title']} - {self.spotify_track['artist']} Audio"
+        title = f'{search_title} Audio' if search_title else f"{self.spotify_track['title']} - {self.spotify_track['artist']} Audio"
         videosSearch = VideosSearch(title, limit=1)
 
         first_result = videosSearch.result()['result'][0]

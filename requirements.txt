@@ -2,8 +2,9 @@ spotipy
 lyricsgenius
 moviepy
 mutagen
-youtube-dl
-google-api-python-client
 youtubesearchpython
 tenacity
 pytube
+deezer-python
+python-dotenv
+requests

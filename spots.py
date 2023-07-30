@@ -6,11 +6,16 @@ from get_spotify_track import GetSpotifyTrack
 from os import mkdir, chdir, getcwd
 from pytube import Playlist
 from spotify_to_youtube import ProcessSpotifyLink
-from sys import argv
 from youtube_to_spotify import ProcessYoutubeLink
+import argparse
 import logging
 
-links = argv[1:]
+parser = argparse.ArgumentParser(description="Convert a YouTube or Spotify url to mp3")
+parser.add_argument('--url', type=str, nargs='+', help='One or more urls to be converted.')
+parser.add_argument('--search', type=str, nargs='+', default='', help='Search for a track by title and name.', metavar='"Artist - Title"')
+args = parser.parse_args()
+links = args.url
+search_titles = args.search
 
 logging.basicConfig(level=logging.INFO)
 
@@ -28,6 +33,15 @@ def main():
 
     # Change to the new directory
     chdir(new_dir)
+
+    # search for titles provided
+    for title in search_titles:
+        logging.basicConfig(level=logging.INFO)
+        logging.info(f'searching for {title}...')
+        youtube = ProcessYoutubeLink(search_title=title)
+        youtube.process_youtube_url()
+
+    # download all links
     for link in links:
         is_valid_url = 'spotify' in link or 'youtu' in link
         if not is_valid_url:
@@ -49,12 +63,15 @@ def ConvertToMP3(url):
         url (str): the url to be converted
         video_only (bool, optional): if true, downloads only video. Defaults to False.
     """
+    # download spotify link
     if 'spotify' in url:
         spotify_client = GetSpotifyTrack(url)
+        # single
         if 'track' in url:
             metadata = spotify_client.process_url()
             youtube_client = ProcessSpotifyLink(metadata)
             youtube_client.download_youtube_video()
+        # playlist
         else:
             spotify_playlist, playlist_name = spotify_client.process_url()
             download_spotify_url(spotify_playlist, playlist_name)
