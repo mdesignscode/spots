@@ -47,9 +47,4 @@ class FileStorage:
         """
         Returns the object based on the url, or None if not found
         """
-        try:
-            obj = self.all()[url]
-        except Exception:
-            obj = None
-
-        return obj
+        return self.__objects.get(url, None)

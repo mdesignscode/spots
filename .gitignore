@@ -5,3 +5,4 @@ spots_venv
 .vscode
 __pycache__
 q.txt
+tests
