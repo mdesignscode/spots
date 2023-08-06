@@ -13,6 +13,8 @@ from os import path, remove
 from pytube import YouTube
 from requests import get
 from youtubesearchpython import VideosSearch
+from engine import storage
+from models.errors import InvalidURL
 
 
 class ProcessSpotifyLink:
@@ -26,21 +28,33 @@ class ProcessSpotifyLink:
     def __init__(self, spotify_track: dict, youtube_url=''):
         self.spotify_track = spotify_track
         self.youtube_url = youtube_url if youtube_url else self.get_youtube_video()
-        self.youtube = YouTube(self.youtube_url)
 
-    # @retry
     def download_youtube_video(self, directory_path=''):
         """Downloads a youtube video as audio
 
         Args:
             directory_path (str, optional): The directory to save a playlist to. Defaults to ''.
         """
-        yt = self.youtube
+        # no search result found
+        if not self.youtube_url:
+            return
+
+        # check url availability
+        try:
+            yt = YouTube(self.youtube_url)
+            yt.check_availability()
+        except:
+            basicConfig(level=ERROR)
+            error(f'{self.youtube_url} is not available')
+            raise InvalidURL
+
+        storage.new(self.spotify_track)
 
         # add title to downloads history
         track_title = f'{self.spotify_track["artist"]} - {self.spotify_track["title"]}'
         # '/' will read file name as folder in *nix systems
         track_title = track_title.replace('/', '|')
+
         try:
             self.add_to_download_history(track_title)
         except TitleExistsError:
@@ -68,9 +82,7 @@ class ProcessSpotifyLink:
 
         # download the audio file
         print(f'Downloading {track_title}...')
-        audio.download(
-            output_path=directory_path, filename=filename
-        )
+        audio.download(output_path=directory_path, filename=filename)
 
         # convert to mp3 and update metadata
         self.convert_to_mp3(
@@ -175,7 +187,14 @@ class ProcessSpotifyLink:
         title = f'{search_title} Audio' if search_title else f"{self.spotify_track['title']} - {self.spotify_track['artist']} Audio"
         videosSearch = VideosSearch(title, limit=1)
 
-        first_result = videosSearch.result()['result'][0]
+        search_result = videosSearch.result()['result']
+
+        if not search_result:
+            basicConfig(level=ERROR)
+            error(f'No search results for {search_title}')
+            return ''
+
+        first_result = search_result[0]
 
         return first_result['link']
 

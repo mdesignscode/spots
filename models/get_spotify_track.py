@@ -6,13 +6,12 @@ from dotenv import load_dotenv
 from engine import storage
 from models.errors import InvalidURL
 from os import getenv
-from requests.exceptions import ConnectionError, ReadTimeout
+from requests.exceptions import ReadTimeout
 from spotipy.exceptions import SpotifyException
 from spotipy.oauth2 import SpotifyClientCredentials
-from tenacity import retry
 import logging
-import lyricsgenius
-import spotipy
+from lyricsgenius import Genius
+from spotipy import Spotify
 
 load_dotenv()
 
@@ -25,7 +24,7 @@ class GetSpotifyTrack:
     """
 
     # create a Spotify API client
-    spotify = spotipy.Spotify(
+    spotify = Spotify(
         auth_manager=SpotifyClientCredentials(
             client_id=getenv('SPOTIPY_CLIENT_ID'),
             client_secret=getenv('client_secret')
@@ -33,7 +32,7 @@ class GetSpotifyTrack:
     )
 
     # create genius api for lyrics
-    genius = lyricsgenius.Genius(getenv('lyricsgenius_key'))
+    genius = Genius(getenv('lyricsgenius_key'))
 
     def __init__(self, track_url: str):
         self.track_url = track_url
@@ -72,7 +71,7 @@ class GetSpotifyTrack:
                 release_date_str = album['release_date']
                 release_date_obj = datetime.strptime(
                     release_date_str, "%Y-%m-%d")
-                release_date = release_date_obj.strftime("%Y-%")
+                release_date = release_date_obj.strftime("%Y")
             except ValueError:
                 release_date = None
 
@@ -93,7 +92,7 @@ class GetSpotifyTrack:
 
             # get track lyrics
             song = self.genius.search_song(track_name, artist)
-            not_found = not song or 'Verse' not in song.lyrics
+            not_found = not song or 'Verse' not in song.lyrics or track_name not in song.title
             lyrics = None if not_found else song.lyrics
 
             metadata = {
@@ -115,7 +114,6 @@ class GetSpotifyTrack:
             logging.error(f'{self.track_url} is invalid')
             raise InvalidURL
 
-    @retry
     def process_url(self):
         """processes spotify url according to resource type"""
         track_list = []

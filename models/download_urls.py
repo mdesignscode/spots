@@ -1,8 +1,9 @@
 #!/usr/bin/python3
 """A class that processes a Spotify or YouTube url"""
 
+from logging import basicConfig, ERROR, error
 from os import mkdir, chdir, getcwd
-from pytube import Playlist
+from pytube import Playlist, YouTube
 from models.get_spotify_track import GetSpotifyTrack
 from models.errors import InvalidURL
 from models.spotify_to_youtube import ProcessSpotifyLink
@@ -19,14 +20,17 @@ class ConvertToMP3(ProcessYoutubeLink):
     def __init__(self, url):
         self.url = url
 
-    # @retry
     def convert_url(self):
-        """Converts a youtube or spotify url to mp3, or a youtube video to mp3"""
+        """Converts a youtube or spotify url to mp3, or a youtube video to mp3
+
+        Raises:
+            InvalidURL: if provided url not available
+        """
         # download spotify link
         url = self.url
 
-        if 'spotify' in url:
-            try:
+        try:
+            if 'spotify' in url:
                 GetSpotifyTrack.__init__(self, url)
                 # single
                 if 'track' in url:
@@ -36,17 +40,28 @@ class ConvertToMP3(ProcessYoutubeLink):
                 # playlist
                 else:
                     spotify_playlist, playlist_name = self.process_url()
-                    self.download_spotify_playlist(spotify_playlist, playlist_name)
-            except InvalidURL:
-                return
+                    self.download_spotify_playlist(
+                        spotify_playlist, playlist_name)
 
-        elif 'youtu' in url:
-            # download a youtube playlist
-            if 'playlist' in url:
-                self.download_youtube_playlist(url)
-            else:
-                super().__init__(url)
-                self.process_youtube_url()
+            elif 'youtu' in url:
+                # check url availability
+                try:
+                    yt = YouTube(url)
+                    yt.check_availability()
+                except:
+                    basicConfig(level=ERROR)
+                    error(f'{url} is not available')
+                    raise InvalidURL
+
+                # download a youtube playlist
+                if 'playlist' in url:
+                    self.download_youtube_playlist(url)
+                else:
+                    super().__init__(url)
+                    self.process_youtube_url()
+
+        except InvalidURL:
+            return
 
     def download_spotify_playlist(self, spotify_playlist, album_folder):
         """downloads a spotify playlist

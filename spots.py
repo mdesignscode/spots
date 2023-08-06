@@ -4,6 +4,7 @@
 from argparse import ArgumentParser
 from logging import basicConfig, error, ERROR, info, INFO
 from os import mkdir, chdir, getcwd
+from tenacity import retry, stop_after_delay
 from engine import storage
 from models.download_urls import ConvertToMP3
 from models.youtube_to_spotify import ProcessYoutubeLink
@@ -27,7 +28,7 @@ args = parser.parse_args()
 links = args.url
 search_titles = args.search
 
-
+@retry(stop=stop_after_delay(60))
 def main():
     # Get the current working directory
     current_dir = getcwd()
@@ -59,7 +60,7 @@ def main():
         converter = ConvertToMP3(link)
         converter.convert_url()
 
-        storage.save()
+    storage.save()
 
     # Change back to the original directory
     chdir(current_dir)

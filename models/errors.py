@@ -12,7 +12,3 @@ class TitleExistsError(Exception):
 class InvalidURL(Exception):
     """Url not valid"""
     pass
-
-class NoSearchResult(Exception):
-    """No result found for title"""
-    pass

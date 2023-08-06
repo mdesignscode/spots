@@ -2,7 +2,7 @@ spotipy
 lyricsgenius
 moviepy
 mutagen
-youtubesearchpython
+youtube-search-python
 tenacity
 pytube
 deezer-python
