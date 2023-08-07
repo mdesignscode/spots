@@ -39,10 +39,6 @@ class FileStorage:
         except:
             pass
 
-    def close(self):
-        """call reload() method for deserializing the JSON file to objects"""
-        self.reload()
-
     def get(self, url):
         """
         Returns the object based on the url, or None if not found

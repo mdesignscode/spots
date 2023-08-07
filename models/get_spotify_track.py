@@ -93,7 +93,7 @@ class GetSpotifyTrack:
             # get track lyrics
             song = self.genius.search_song(track_name, artist)
             not_found = not song or 'Verse' not in song.lyrics or track_name not in song.title
-            lyrics = None if not_found else song.lyrics
+            lyrics = '' if not_found else song.lyrics
 
             metadata = {
                 'title': track_name,

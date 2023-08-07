@@ -6,7 +6,7 @@ from logging import basicConfig, error, ERROR, info, INFO
 from os import mkdir, chdir, getcwd
 from tenacity import retry, stop_after_delay
 from engine import storage
-from models.download_urls import ConvertToMP3
+from download_urls import convert_url
 from models.youtube_to_spotify import ProcessYoutubeLink
 
 # set cli arguments
@@ -43,6 +43,8 @@ def main():
     # Change to the new directory
     chdir(new_dir)
 
+    storage.reload()
+
     # search for titles provided
     for title in search_titles:
         basicConfig(level=INFO)
@@ -57,10 +59,9 @@ def main():
             basicConfig(level=ERROR)
             error(f'{link} not valid YouTube or Spotify url')
             continue
-        converter = ConvertToMP3(link)
-        converter.convert_url()
+        convert_url(link)
 
-    storage.save()
+        storage.save()
 
     # Change back to the original directory
     chdir(current_dir)

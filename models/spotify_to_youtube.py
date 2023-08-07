@@ -27,7 +27,7 @@ class ProcessSpotifyLink:
 
     def __init__(self, spotify_track: dict, youtube_url=''):
         self.spotify_track = spotify_track
-        self.youtube_url = youtube_url if youtube_url else self.get_youtube_video()
+        self.youtube_url = youtube_url or self.get_youtube_video()
 
     def download_youtube_video(self, directory_path=''):
         """Downloads a youtube video as audio
@@ -191,7 +191,7 @@ class ProcessSpotifyLink:
 
         if not search_result:
             basicConfig(level=ERROR)
-            error(f'No search results for {search_title}')
+            error(f'No search results for {title}')
             return ''
 
         first_result = search_result[0]

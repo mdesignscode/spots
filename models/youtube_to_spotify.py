@@ -4,18 +4,16 @@
 from __future__ import unicode_literals
 from deezer import Client
 from html import unescape
+from logging import basicConfig, error, ERROR
 from pytube import YouTube
-from pytube.exceptions import VideoUnavailable
 from models.errors import MetadataNotFound, InvalidURL
 from models.get_spotify_track import GetSpotifyTrack
 from models.spotify_to_youtube import ProcessSpotifyLink
-import logging
-
-logging.basicConfig(level=logging.ERROR)
 
 
 class ProcessYoutubeLink(GetSpotifyTrack, ProcessSpotifyLink):
     """Searches for a track from youtube on deezer or spotify"""
+    deezer_client = Client()
 
     def __init__(self, youtube_url: str = '', search_title: str = ''):
         """initializes the url for title to be searched for
@@ -24,7 +22,6 @@ class ProcessYoutubeLink(GetSpotifyTrack, ProcessSpotifyLink):
             youtube_url (str, optional): the url to be processed. Defaults to ''.
             search_title (str, optional): a title to be searched for. Defaults to ''.
         """
-        self.deezer_client = Client()
         self.youtube_url = youtube_url or self.get_youtube_video(search_title)
         self.youtube = YouTube(youtube_url) if youtube_url else None
 
@@ -86,12 +83,12 @@ class ProcessYoutubeLink(GetSpotifyTrack, ProcessSpotifyLink):
         track_number = f'{track.track_position}/{track.album.nb_tracks}'
         album_name = track.album.title
         release_date_obj = track.album.release_date
-        release_date = release_date_obj.strftime("%Y-%m-%d")
+        release_date = release_date_obj.strftime("%Y")
 
         # get track lyrics
         song = self.genius.search_song(track_name, artist)
         not_found = not song or 'Verse' not in song.lyrics
-        lyrics = None if not_found else song.lyrics
+        lyrics = '' if not_found else song.lyrics
 
         metadata = {
             'title': track_name,
@@ -116,13 +113,16 @@ class ProcessYoutubeLink(GetSpotifyTrack, ProcessSpotifyLink):
         Raises:
             InvalidURL: if invalid YouTube video url provided
         """
+        # check url availability
+        search_response = self.youtube
         try:
-            search_response = self.youtube
-            result_title = search_response.title
-        except VideoUnavailable:
-            logging.basicConfig(level=logging.ERROR)
-            logging.error(f'{self.youtube_url} is invalid')
+            search_response.check_availability()
+        except:
+            basicConfig(level=ERROR)
+            error(f'{self.youtube_url} is not available')
             raise InvalidURL
+
+        result_title = search_response.title
 
         # Decode the string
         try:
