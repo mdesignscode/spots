@@ -2,19 +2,22 @@
 """Factor an object to Retrieve and Download a Youtube Video as MP3"""
 
 from __future__ import unicode_literals
+from dotenv import load_dotenv
 from logging import basicConfig, error, ERROR, info, INFO
 from hashlib import md5
-from tenacity import retry, stop_after_delay
 from models.errors import TitleExistsError
 from moviepy.editor import AudioFileClip
 from mutagen.id3 import ID3, APIC, TIT2, TPE1, TRCK, TALB, USLT, TDRL, TCON
 from mutagen.mp3 import MP3
-from os import path, remove
+from os import path, remove, getenv
 from pytube import YouTube
+from pytube.exceptions import AgeRestrictedError
 from requests import get
 from youtubesearchpython import VideosSearch
 from engine import storage
 from models.errors import InvalidURL
+
+load_dotenv()
 
 
 class ProcessSpotifyLink:
@@ -41,7 +44,7 @@ class ProcessSpotifyLink:
 
         # check url availability
         try:
-            yt = YouTube(self.youtube_url)
+            yt = YouTube(self.youtube_url, use_oauth=getenv('use_oauth'))
             yt.check_availability()
         except:
             basicConfig(level=ERROR)
@@ -63,7 +66,12 @@ class ProcessSpotifyLink:
             return
 
         # get highest quality audio file
-        audio = yt.streams.get_audio_only()
+        try:
+            audio = yt.streams.get_audio_only()
+        except AgeRestrictedError:
+            basicConfig(level=ERROR)
+            error(f'{track_title} is age restricted!')
+            return
 
         # get audio file name
         ext = audio.mime_type.split('/')[1]
