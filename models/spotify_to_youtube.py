@@ -44,6 +44,7 @@ class ProcessSpotifyLink:
 
         # check url availability
         try:
+            print(getenv('use_oauth'))
             yt = YouTube(self.youtube_url, use_oauth=getenv('use_oauth'))
             yt.check_availability()
         except:

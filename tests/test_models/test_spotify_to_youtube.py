@@ -86,9 +86,15 @@ class TestProcessSpotifyLink(TestCase):
         result = self.process_spotify_link.get_youtube_video("Test Title")
         self.assertEqual(result, url)
 
+    @patch('models.spotify_to_youtube.getenv')
     @patch('models.spotify_to_youtube.YouTube')
     @patch('models.spotify_to_youtube.ProcessSpotifyLink.convert_to_mp3')
-    def test_download_youtube_video(self, mock_convert_to_mp3, mock_youtube):
+    def test_download_youtube_video(
+        self,
+        mock_convert_to_mp3,
+        mock_youtube,
+        mock_getenv
+    ):
         """tests that method downloads youtube video and converts it"""
         # create mock instances
         mock_youtube_instance = MagicMock()
@@ -98,12 +104,13 @@ class TestProcessSpotifyLink(TestCase):
         mock_youtube.return_value = mock_youtube_instance
         mock_audio_stream.mime_type = 'audio/mp4'
         mock_youtube_instance.streams.get_audio_only.return_value = mock_audio_stream
+        mock_getenv.return_value = None
 
         # action
         self.process_spotify_link.download_youtube_video()
 
         # assertions
-        mock_youtube.assert_called_once_with(self.youtube_url)
+        mock_youtube.assert_called_once_with(self.youtube_url, use_oauth=None)
         audio = mock_youtube_instance.streams.get_audio_only
         audio.assert_called_once_with()
 
@@ -118,24 +125,31 @@ class TestProcessSpotifyLink(TestCase):
             self.title
         )
 
+    @patch('models.spotify_to_youtube.getenv')
     @patch('models.spotify_to_youtube.md5')
     @patch('models.spotify_to_youtube.YouTube')
     @patch('models.spotify_to_youtube.ProcessSpotifyLink.convert_to_mp3')
     def test_download_youtube_video_with_long_title(
-            self, mock_convert_to_mp3, mock_youtube, moch_hash):
+            self,
+            mock_convert_to_mp3,
+            mock_youtube,
+            mock_hash,
+            mock_getenv
+    ):
         """tests that method converts a long title to a shortened hash"""
         # create mock instances
         mock_youtube_instance = MagicMock()
         mock_audio_stream = MagicMock()
-        moch_hash_instance = MagicMock()
+        mock_hash_instance = MagicMock()
         hex_digest = 'a6f61ef8f5423c8d99e3f7f83f4ccd48'
 
         # set required values
         mock_youtube.return_value = mock_youtube_instance
         mock_audio_stream.mime_type = 'audio/mp4'
         mock_youtube_instance.streams.get_audio_only.return_value = mock_audio_stream
-        moch_hash_instance.hexdigest.return_value = hex_digest
-        moch_hash.return_value = moch_hash_instance
+        mock_hash_instance.hexdigest.return_value = hex_digest
+        mock_hash.return_value = mock_hash_instance
+        mock_getenv.return_value = None
 
         # create a long title
         title = self.spotify_track['title']
@@ -146,7 +160,7 @@ class TestProcessSpotifyLink(TestCase):
         self.process_spotify_link.download_youtube_video()
 
         # assertions
-        mock_youtube.assert_called_once_with(self.youtube_url)
+        mock_youtube.assert_called_once_with(self.youtube_url, use_oauth=None)
         audio = mock_youtube_instance.streams.get_audio_only
         audio.assert_called_once_with()
 
@@ -193,9 +207,12 @@ class TestProcessSpotifyLink(TestCase):
 
         mock_update_metadata.side_effect = lambda *args, **kwargs: None
 
-        self.process_spotify_link.convert_to_mp3(old_file, new_file, song_title)
+        self.process_spotify_link.convert_to_mp3(
+            old_file, new_file, song_title)
 
-        mock_audio.write_audiofile.assert_called_once_with(new_file, codec='mp3')
+        mock_audio.write_audiofile.assert_called_once_with(
+            new_file, codec='mp3')
+
 
 if __name__ == '__main__':
     main()
