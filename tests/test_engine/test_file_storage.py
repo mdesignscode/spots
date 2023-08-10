@@ -32,22 +32,22 @@ class TestFileStorage(unittest.TestCase):
             pass
 
     def test_all(self):
-        """Test all method"""
+        """Method should return all objects in memory"""
         self.assertEqual(self.storage.all(), {})
 
     def test_new(self):
-        """Test new method"""
+        """Method should add a new metadata object to memory"""
         self.storage.new(self.test_dict)
         self.assertIn(self.link, self.storage.all())
 
     def test_save(self):
-        """Test save method"""
+        """Method should serialize objects in storage to json file"""
         self.storage.new(self.test_dict)
         self.storage.save()
         self.assertTrue(os.path.exists(".metadata.json"))
 
     def test_reload(self):
-        """Test reload method"""
+        """Method should deserialize objects from file to memory"""
         self.storage.new(self.test_dict)
         self.storage.save()
         storage2 = FileStorage()
@@ -55,7 +55,7 @@ class TestFileStorage(unittest.TestCase):
         self.assertEqual(self.storage.all(), storage2.all())
 
     def test_get(self):
-        """Test get method"""
+        """Method should return object matching given key"""
         self.storage.new(self.test_dict)
         obj = self.storage.get(self.link)
         self.assertEqual(obj, self.test_dict)
