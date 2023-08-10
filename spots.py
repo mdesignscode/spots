@@ -28,7 +28,7 @@ args = parser.parse_args()
 links = args.url
 search_titles = args.search
 
-@retry(stop=stop_after_delay(60))
+@retry
 def main():
     # Get the current working directory
     current_dir = getcwd()
@@ -46,22 +46,26 @@ def main():
     storage.reload()
 
     # search for titles provided
-    for title in search_titles:
-        basicConfig(level=INFO)
-        info(f'searching for {title}...')
-        youtube = ProcessYoutubeLink(search_title=title)
-        youtube.process_youtube_url()
+    if search_titles:
+        for title in search_titles:
+            basicConfig(level=INFO)
+            info(f'searching for {title}...')
+            youtube = ProcessYoutubeLink(search_title=title)
+            youtube.process_youtube_url()
+
+            storage.save()
 
     # download all links
-    for link in links:
-        is_valid_url = 'spotify' in link or 'youtu' in link
-        if not is_valid_url:
-            basicConfig(level=ERROR)
-            error(f'{link} not valid YouTube or Spotify url')
-            continue
-        convert_url(link)
+    if links:
+        for link in links:
+            is_valid_url = 'spotify' in link or 'youtu' in link
+            if not is_valid_url:
+                basicConfig(level=ERROR)
+                error(f'{link} not valid YouTube or Spotify url')
+                continue
+            convert_url(link)
 
-        storage.save()
+            storage.save()
 
     # Change back to the original directory
     chdir(current_dir)

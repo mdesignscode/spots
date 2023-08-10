@@ -5,3 +5,4 @@ spots_venv
 .vscode
 __pycache__
 tests/test_download_urls.py
+q.txt
