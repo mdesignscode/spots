@@ -28,7 +28,7 @@ args = parser.parse_args()
 links = args.url
 search_titles = args.search
 
-@retry
+
 def main():
     # Get the current working directory
     current_dir = getcwd()
@@ -45,15 +45,22 @@ def main():
 
     storage.reload()
 
-    # search for titles provided
-    if search_titles:
-        for title in search_titles:
-            basicConfig(level=INFO)
-            info(f'searching for {title}...')
-            youtube = ProcessYoutubeLink(search_title=title)
-            youtube.process_youtube_url()
+    download()
 
-            storage.save()
+    # Change back to the original directory
+    chdir(current_dir)
+
+
+@retry(stop=stop_after_delay(120))
+def download():
+    # search for titles provided
+    for title in search_titles:
+        basicConfig(level=INFO)
+        info(f'searching for {title}...')
+        youtube = ProcessYoutubeLink(search_title=title)
+        youtube.process_youtube_url()
+
+        storage.save()
 
     # download all links
     if links:
@@ -66,9 +73,6 @@ def main():
             convert_url(link)
 
             storage.save()
-
-    # Change back to the original directory
-    chdir(current_dir)
 
 
 if __name__ == '__main__':

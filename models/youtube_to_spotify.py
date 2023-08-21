@@ -36,6 +36,8 @@ class ProcessYoutubeLink(GetSpotifyTrack, ProcessSpotifyLink):
         if any(condition):
             print('Downloading with metadata...')
 
+            metadata = self.get_metadata(search_title, self.youtube_url)
+
             ProcessSpotifyLink.__init__(self, metadata, self.youtube_url)
 
             # download video as audio

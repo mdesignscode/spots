@@ -3,6 +3,7 @@
 
 from datetime import datetime
 from dotenv import load_dotenv
+from tenacity import retry, stop_after_delay
 from engine import storage
 from models.errors import InvalidURL
 from os import getenv
@@ -37,6 +38,7 @@ class GetSpotifyTrack:
     def __init__(self, track_url: str):
         self.track_url = track_url
 
+    @retry(stop=stop_after_delay(120))
     def get_track(self, track_id: str) -> dict:
         """
             Retrieves metadata for a spotify track

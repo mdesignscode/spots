@@ -44,8 +44,7 @@ class ProcessSpotifyLink:
 
         # check url availability
         try:
-            print(getenv('use_oauth'))
-            yt = YouTube(self.youtube_url, use_oauth=getenv('use_oauth'))
+            yt = YouTube(self.youtube_url, use_oauth=bool(getenv('use_oauth')))
             yt.check_availability()
         except:
             basicConfig(level=ERROR)
@@ -69,9 +68,9 @@ class ProcessSpotifyLink:
         # get highest quality audio file
         try:
             audio = yt.streams.get_audio_only()
-        except AgeRestrictedError:
+        except:
             basicConfig(level=ERROR)
-            error(f'{track_title} is age restricted!')
+            error(f"Couldn't download {track_title}")
             return
 
         # get audio file name
@@ -94,11 +93,16 @@ class ProcessSpotifyLink:
         audio.download(output_path=directory_path, filename=filename)
 
         # convert to mp3 and update metadata
-        self.convert_to_mp3(
-            output,
-            path.join(directory_path, filename.replace('.mp4', '.mp3')),
-            track_title
-        )
+        try:
+            self.convert_to_mp3(
+                output,
+                path.join(directory_path, filename.replace('.mp4', '.mp3')),
+                track_title
+            )
+        except:
+            error(f"Failed to convert {track_title}.{ext}")
+            self.add_to_download_history(track_title, True)
+            return
 
     def update_metadata(self, audio_path: str):
         """Updates the metadata of song to be downloaded
