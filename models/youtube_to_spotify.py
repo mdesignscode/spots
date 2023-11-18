@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 from deezer import Client
 from html import unescape
 from logging import basicConfig, error, ERROR
+from os import getenv
 from pytube import YouTube
 from models.errors import MetadataNotFound, InvalidURL
 from models.get_spotify_track import GetSpotifyTrack
@@ -23,7 +24,10 @@ class ProcessYoutubeLink(GetSpotifyTrack, ProcessSpotifyLink):
             search_title (str, optional): a title to be searched for. Defaults to ''.
         """
         self.youtube_url = youtube_url or self.get_youtube_video(search_title)
-        self.youtube = YouTube(youtube_url) if youtube_url else None
+        self.youtube = YouTube(
+            self.youtube_url,
+            use_oauth=bool(getenv('use_oauth'))
+        ) if self.youtube_url else None
 
     def process_youtube_url(self):
         """Processes a youtube url and downloads it"""
@@ -52,6 +56,7 @@ class ProcessYoutubeLink(GetSpotifyTrack, ProcessSpotifyLink):
             metadata = {
                 'title': track_name,
                 'artist': artist,
+                'link': self.youtube_url
             }
 
             ProcessSpotifyLink.__init__(self, metadata)

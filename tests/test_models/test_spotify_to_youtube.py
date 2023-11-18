@@ -110,7 +110,7 @@ class TestProcessSpotifyLink(TestCase):
         self.process_spotify_link.download_youtube_video()
 
         # assertions
-        mock_youtube.assert_called_once_with(self.youtube_url, use_oauth=None)
+        mock_youtube.assert_called_once_with(self.youtube_url, use_oauth=False)
         audio = mock_youtube_instance.streams.get_audio_only
         audio.assert_called_once_with()
 
@@ -160,7 +160,7 @@ class TestProcessSpotifyLink(TestCase):
         self.process_spotify_link.download_youtube_video()
 
         # assertions
-        mock_youtube.assert_called_once_with(self.youtube_url, use_oauth=None)
+        mock_youtube.assert_called_once_with(self.youtube_url, use_oauth=False)
         audio = mock_youtube_instance.streams.get_audio_only
         audio.assert_called_once_with()
 

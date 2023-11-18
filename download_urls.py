@@ -2,12 +2,15 @@
 """Contains functions that processes a Spotify or YouTube url"""
 
 from logging import basicConfig, ERROR, error
-from os import mkdir, chdir, getcwd
+from os import mkdir, chdir, getcwd, getenv
 from pytube import Playlist, YouTube
 from models.get_spotify_track import GetSpotifyTrack
 from models.errors import InvalidURL
 from models.spotify_to_youtube import ProcessSpotifyLink
 from models.youtube_to_spotify import ProcessYoutubeLink
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def convert_url(url: str):
@@ -36,7 +39,7 @@ def convert_url(url: str):
         elif 'youtu' in url:
             # check url availability
             try:
-                youtube = YouTube(url)
+                youtube = YouTube(url, use_oauth=bool(getenv('use_oauth')))
                 youtube.check_availability()
             except:
                 basicConfig(level=ERROR)
